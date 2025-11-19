@@ -98,6 +98,12 @@ body::before {
     z-index: 10;
 }
 
+@media (max-width: 768px) {
+    .hero-logo::after {
+        height: 300px;
+    }
+}
+
 
 
 .hero-logo-img {
@@ -678,13 +684,67 @@ body::before {
 }
 
 @media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
     .title {
-        font-size: 2.5rem;
-        letter-spacing: 4px;
+        font-size: 2rem;
+        letter-spacing: 2px;
     }
     
     .subtitle {
+        font-size: 1rem;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+        margin-bottom: 20px;
+    }
+
+    .section-subtitle {
         font-size: 1.2rem;
+        letter-spacing: 2px;
+        margin-bottom: 40px;
+    }
+
+    .nominations-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 20px 10px;
+    }
+
+    .shield-container {
+        height: 350px;
+        min-height: 350px;
+    }
+
+    .shield-bg {
+        width: 220px;
+        height: 260px;
+    }
+
+    .shield-full-image {
+        width: 220px;
+        height: 260px;
+    }
+
+    .shield-emoji {
+        font-size: 4rem;
+    }
+
+    .nomination-info {
+        margin-top: 15px;
+    }
+
+    .nomination-name {
+        font-size: 1.3rem;
+        letter-spacing: 2px;
+    }
+
+    .nomination-status {
+        font-size: 0.9rem;
     }
     
     .admin-panel {
@@ -694,8 +754,49 @@ body::before {
     }
     
     .btn {
-        padding: 15px 30px;
+        padding: 12px 24px;
         font-size: 0.9rem;
+    }
+
+    .hero-logo {
+        height: auto;
+        min-height: auto;
+        padding: 40px 20px 40px;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .hero-logo-img {
+        width: 70vw;
+        max-width: 350px;
+        margin-top: 0;
+        order: 2;
+    }
+
+    .hero-text {
+        margin-bottom: 0;
+        margin-top: 0;
+        order: 1;
+    }
+
+    .title {
+        font-size: 1.8rem;
+        letter-spacing: 3px;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+    }
+
+    .nominations-view {
+        padding-top: 40px;
+        padding-bottom: 60px;
+        margin-left: -10px;
+        margin-right: -10px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
 }
 

@@ -155,39 +155,47 @@ function updateVoteButton() {
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', closeModal);
 
-// Generate browser fingerprint
+// Generate browser fingerprint (iOS-compatible)
 function generateFingerprint() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('fingerprint', 2, 2);
-    
-    const fingerprint = canvas.toDataURL() + 
-        navigator.userAgent + 
-        navigator.language + 
-        screen.colorDepth + 
-        screen.width + 'x' + screen.height +
-        new Date().getTimezoneOffset();
-    
-    // Simple hash function
-    let hash = 0;
-    for (let i = 0; i < fingerprint.length; i++) {
-        const char = fingerprint.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+    try {
+        // Более простой fingerprint без canvas (для совместимости с iOS)
+        const fingerprint = 
+            navigator.userAgent + 
+            navigator.language + 
+            screen.colorDepth + 
+            screen.width + 'x' + screen.height +
+            new Date().getTimezoneOffset() +
+            (navigator.hardwareConcurrency || '') +
+            (navigator.deviceMemory || '');
+        
+        // Simple hash function
+        let hash = 0;
+        for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return 'fp_' + Math.abs(hash).toString(36);
+    } catch (error) {
+        // Fallback: generate random ID
+        return 'fp_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     }
-    return 'fp_' + Math.abs(hash).toString(36);
 }
 
-// Get or create user ID
+// Get or create user ID (with error handling for iOS)
 function getUserId() {
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-        userId = generateFingerprint();
-        localStorage.setItem('userId', userId);
+    try {
+        let userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = generateFingerprint();
+            localStorage.setItem('userId', userId);
+        }
+        return userId;
+    } catch (error) {
+        console.error('LocalStorage error:', error);
+        // Fallback if localStorage is blocked (private mode)
+        return generateFingerprint();
     }
-    return userId;
 }
 
 // Submit vote for current nomination
@@ -200,9 +208,16 @@ modalSubmit.addEventListener('click', async () => {
     try {
         const userId = getUserId();
         
-        // Check if this user already voted (in Firebase)
+        // Check if this user already voted (in Firebase) with timeout
         const userVoteRef = ref(database, `userVotes/${userId}`);
-        const userVoteSnapshot = await get(userVoteRef);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 10000)
+        );
+        
+        const userVoteSnapshot = await Promise.race([
+            get(userVoteRef),
+            timeoutPromise
+        ]);
         
         if (userVoteSnapshot.exists()) {
             const existingVotes = userVoteSnapshot.val();
@@ -214,27 +229,50 @@ modalSubmit.addEventListener('click', async () => {
             }
         }
         
-        // Save vote locally
+        // Save vote locally (with error handling)
         votes[currentNomination.id] = selectedCandidate;
-        localStorage.setItem('votes', JSON.stringify(votes));
+        try {
+            localStorage.setItem('votes', JSON.stringify(votes));
+        } catch (storageError) {
+            console.warn('LocalStorage save failed:', storageError);
+        }
         
-        // Save to Firebase (both vote count and user tracking)
-        await set(ref(database, `votes/${currentNomination.id}/${selectedCandidate}`), increment(1));
-        await set(ref(database, `userVotes/${userId}/${currentNomination.id}`), selectedCandidate);
+        // Save to Firebase (both vote count and user tracking) with timeout
+        await Promise.race([
+            Promise.all([
+                set(ref(database, `votes/${currentNomination.id}/${selectedCandidate}`), increment(1)),
+                set(ref(database, `userVotes/${userId}/${currentNomination.id}`), selectedCandidate)
+            ]),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout при сохранении')), 10000)
+            )
+        ]);
         
         // Close modal
         closeModal();
         
         // Check if all nominations are voted
         if (Object.keys(votes).length === nominations.length) {
-            localStorage.setItem('hasVoted', 'true');
+            try {
+                localStorage.setItem('hasVoted', 'true');
+            } catch (storageError) {
+                console.warn('LocalStorage save failed:', storageError);
+            }
             showCompletion();
         } else {
             renderNominationsGrid();
         }
     } catch (error) {
         console.error('Error submitting vote:', error);
-        alert('Ошибка при сохранении голоса. Попробуйте еще раз.');
+        let errorMessage = 'Ошибка при сохранении голоса. Попробуйте еще раз.';
+        
+        if (error.message === 'Timeout' || error.message === 'Timeout при сохранении') {
+            errorMessage = 'Превышено время ожидания. Проверьте подключение к интернету и попробуйте снова.';
+        } else if (error.code === 'PERMISSION_DENIED') {
+            errorMessage = 'Ошибка доступа к базе данных. Обратитесь к администратору.';
+        }
+        
+        alert(errorMessage);
     } finally {
         modalSubmit.disabled = false;
         modalSubmit.textContent = 'Подтвердить выбор';
