@@ -1,0 +1,75 @@
+
+/* Автоматически сгенерированные стили для выравнивания изображений */
+/* Масштабирование основано на реальном размере контента, а не размере файла */
+
+[data-nomination="alkash-goda"] .shield-full-image {
+    transform: scale(1.455);
+}
+
+[data-nomination="alkash-goda"]:hover .shield-full-image {
+    transform: scale(1.571);
+}
+
+[data-nomination="zavoz-goda"] .shield-full-image {
+    transform: scale(1.25);
+}
+
+[data-nomination="zavoz-goda"]:hover .shield-full-image {
+    transform: scale(1.35);
+}
+
+[data-nomination="korol-klassa"] .shield-full-image {
+    transform: scale(1.25) translateY(-10px);
+}
+
+[data-nomination="korol-klassa"]:hover .shield-full-image {
+    transform: scale(1.35) translateY(-10px);
+}
+
+[data-nomination="koroleva-klassa"] .shield-full-image {
+    transform: scale(1.40) translateY(10px);
+}
+
+[data-nomination="koroleva-klassa"]:hover .shield-full-image {
+    transform: scale(1.51) translateY(10px);
+}
+
+[data-nomination="lubimets-uchiteley"] .shield-full-image {
+    transform: scale(1.193);
+}
+
+[data-nomination="lubimets-uchiteley"]:hover .shield-full-image {
+    transform: scale(1.289);
+}
+
+[data-nomination="luchshiy-igrok-cr"] .shield-full-image {
+    transform: scale(1.196) translateY(-5px);
+}
+
+[data-nomination="luchshiy-igrok-cr"]:hover .shield-full-image {
+    transform: scale(1.291) translateY(-5px);
+}
+
+[data-nomination="mister-ne-ya"] .shield-full-image {
+    transform: scale(1.196);
+}
+
+[data-nomination="mister-ne-ya"]:hover .shield-full-image {
+    transform: scale(1.291);
+}
+
+[data-nomination="normis"] .shield-full-image {
+    transform: scale(1.195);
+}
+
+[data-nomination="normis"]:hover .shield-full-image {
+    transform: scale(1.290);
+}
+
+[data-nomination="missis-podruga"] .shield-full-image {
+    transform: scale(1.05) translateY(10px);
+}
+
+[data-nomination="missis-podruga"]:hover .shield-full-image {
+    transform: scale(1.13) translateY(10px);
+}
