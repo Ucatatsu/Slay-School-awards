@@ -26,15 +26,6 @@ const modalTitle = document.getElementById('modalTitle');
 const modalCandidates = document.getElementById('modalCandidates');
 const modalSubmit = document.getElementById('modalSubmit');
 const completionSection = document.getElementById('completionSection');
-const adminSection = document.getElementById('adminSection');
-const adminToggle = document.getElementById('adminToggle');
-const adminPanel = document.getElementById('adminPanel');
-const adminLogin = document.getElementById('adminLogin');
-const adminResults = document.getElementById('adminResults');
-const adminPassword = document.getElementById('adminPassword');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const resultsContainer = document.getElementById('resultsContainer');
 
 // State
 let votes = {};
@@ -164,6 +155,41 @@ function updateVoteButton() {
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', closeModal);
 
+// Generate browser fingerprint
+function generateFingerprint() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('fingerprint', 2, 2);
+    
+    const fingerprint = canvas.toDataURL() + 
+        navigator.userAgent + 
+        navigator.language + 
+        screen.colorDepth + 
+        screen.width + 'x' + screen.height +
+        new Date().getTimezoneOffset();
+    
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < fingerprint.length; i++) {
+        const char = fingerprint.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return 'fp_' + Math.abs(hash).toString(36);
+}
+
+// Get or create user ID
+function getUserId() {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+        userId = generateFingerprint();
+        localStorage.setItem('userId', userId);
+    }
+    return userId;
+}
+
 // Submit vote for current nomination
 modalSubmit.addEventListener('click', async () => {
     if (!selectedCandidate || !currentNomination) return;
@@ -172,12 +198,29 @@ modalSubmit.addEventListener('click', async () => {
     modalSubmit.textContent = 'Сохранение...';
     
     try {
+        const userId = getUserId();
+        
+        // Check if this user already voted (in Firebase)
+        const userVoteRef = ref(database, `userVotes/${userId}`);
+        const userVoteSnapshot = await get(userVoteRef);
+        
+        if (userVoteSnapshot.exists()) {
+            const existingVotes = userVoteSnapshot.val();
+            if (existingVotes[currentNomination.id]) {
+                alert('⚠️ Вы уже голосовали в этой номинации!');
+                modalSubmit.disabled = false;
+                modalSubmit.textContent = 'Подтвердить выбор';
+                return;
+            }
+        }
+        
         // Save vote locally
         votes[currentNomination.id] = selectedCandidate;
         localStorage.setItem('votes', JSON.stringify(votes));
         
-        // Save to Firebase
+        // Save to Firebase (both vote count and user tracking)
         await set(ref(database, `votes/${currentNomination.id}/${selectedCandidate}`), increment(1));
+        await set(ref(database, `userVotes/${userId}/${currentNomination.id}`), selectedCandidate);
         
         // Close modal
         closeModal();
@@ -201,97 +244,6 @@ modalSubmit.addEventListener('click', async () => {
 // Show completion screen
 function showCompletion() {
     nominationsView.style.display = 'none';
-    votingSection.style.display = 'none';
+    votingModal.style.display = 'none';
     completionSection.style.display = 'block';
-    adminSection.style.display = 'block';
-}
-
-// Admin panel toggle
-adminToggle.addEventListener('click', () => {
-    adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
-});
-
-// Admin login
-loginBtn.addEventListener('click', () => {
-    if (adminPassword.value === ADMIN_PASSWORD) {
-        adminLogin.style.display = 'none';
-        adminResults.style.display = 'block';
-        loadResults();
-    } else {
-        alert('Неверный пароль');
-    }
-});
-
-// Admin logout
-logoutBtn.addEventListener('click', () => {
-    adminLogin.style.display = 'block';
-    adminResults.style.display = 'none';
-    adminPassword.value = '';
-});
-
-// Load results
-async function loadResults() {
-    try {
-        const snapshot = await get(ref(database, 'votes'));
-        const votesData = snapshot.val() || {};
-        
-        resultsContainer.innerHTML = '';
-        
-        nominations.forEach(nomination => {
-            const nominationVotes = votesData[nomination.id] || {};
-            
-            const resultItem = document.createElement('div');
-            resultItem.className = 'result-item';
-            
-            let candidatesHTML = '';
-            const sortedCandidates = Object.entries(nominationVotes)
-                .sort((a, b) => b[1] - a[1]);
-            
-            if (sortedCandidates.length === 0) {
-                candidatesHTML = '<p style="color: #999;">Голосов пока нет</p>';
-            } else {
-                sortedCandidates.forEach(([candidateId, count]) => {
-                    const candidate = candidates.find(c => c.id === candidateId);
-                    if (candidate) {
-                        candidatesHTML += `
-                            <div class="result-candidate">
-                                <span>${candidate.emoji} ${candidate.name}</span>
-                                <span class="result-votes">${count} ${getVotesWord(count)}</span>
-                            </div>
-                        `;
-                    }
-                });
-            }
-            
-            resultItem.innerHTML = `
-                <h4>${nomination.emoji} ${nomination.title}</h4>
-                ${candidatesHTML}
-            `;
-            
-            resultsContainer.appendChild(resultItem);
-        });
-    } catch (error) {
-        console.error('Error loading results:', error);
-        resultsContainer.innerHTML = '<p style="color: red;">Ошибка загрузки результатов</p>';
-    }
-}
-
-// Helper function for Russian plurals
-function getVotesWord(count) {
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-    
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-        return 'голосов';
-    }
-    
-    if (lastDigit === 1) {
-        return 'голос';
-    }
-    
-    if (lastDigit >= 2 && lastDigit <= 4) {
-        return 'голоса';
-    }
-    
-    return 'голосов';
 }

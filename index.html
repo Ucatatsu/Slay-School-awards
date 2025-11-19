@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slay School Awards 2025-2026</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,10 +17,10 @@
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <div class="loading-chains">
-                <img src="load.png" alt="Loading" class="chain-spinner">
+                <img src="assets/load.png" alt="Loading" class="chain-spinner">
             </div>
             <div class="loading-logo">
-                <img src="SS.png" alt="Slay School" class="ss-logo">
+                <img src="assets/SS.png" alt="Slay School" class="ss-logo">
             </div>
         </div>
     </div>
@@ -28,7 +28,7 @@
     <div class="container">
         <header class="header">
             <div class="hero-logo">
-                <img src="logo.png" alt="Slay School Logo" class="hero-logo-img">
+                <img src="assets/logo.png" alt="Slay School Logo" class="hero-logo-img">
                 <div class="hero-text">
                     <h1 class="title">Slay School Awards</h1>
                     <p class="subtitle">2025-2026</p>
@@ -60,22 +60,6 @@
                 <h2>Спасибо за участие!</h2>
                 <p>Ваши голоса учтены</p>
                 <p class="completion-note">Результаты будут объявлены позже</p>
-            </div>
-        </div>
-
-        <div id="adminSection" class="admin-section" style="display: none;">
-            <button class="admin-toggle" id="adminToggle">👑 Админ</button>
-            <div class="admin-panel" id="adminPanel" style="display: none;">
-                <div class="admin-login" id="adminLogin">
-                    <h3>Вход для администратора</h3>
-                    <input type="password" id="adminPassword" placeholder="Пароль">
-                    <button class="btn btn-primary" id="loginBtn">Войти</button>
-                </div>
-                <div class="admin-results" id="adminResults" style="display: none;">
-                    <h3>Результаты голосования</h3>
-                    <div id="resultsContainer"></div>
-                    <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
-                </div>
             </div>
         </div>
     </div>

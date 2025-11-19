@@ -57,7 +57,7 @@ body::before {
     margin-bottom: 0;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
-    background-image: url('bg.png');
+    background-image: url('assets/bg.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

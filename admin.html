@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Slay School Awards</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="hero-logo">
+                <img src="assets/logo.png" alt="Slay School Logo" class="hero-logo-img">
+                <div class="hero-text">
+                    <h1 class="title">Админ-панель</h1>
+                    <p class="subtitle">Результаты голосования</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Login Form -->
+        <div id="loginSection" class="admin-login-section">
+            <div class="admin-login-card">
+                <div class="admin-crown">👑</div>
+                <h2>Вход для администратора</h2>
+                <input 
+                    type="password" 
+                    id="adminPassword" 
+                    class="admin-input" 
+                    placeholder="Введите пароль"
+                    autocomplete="current-password"
+                >
+                <button id="loginBtn" class="btn btn-primary">Войти</button>
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <a href="index.html" class="back-link">← Вернуться на главную</a>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <div class="admin-controls">
+                <button id="resetVotesBtn" class="btn btn-danger">🗑️ Сбросить все голоса</button>
+                <button id="logoutBtn" class="btn btn-secondary">Выйти</button>
+            </div>
+            
+            <div class="section-header">
+                <h2 class="section-title">Результаты голосования</h2>
+                <p class="section-subtitle">Обновляется в реальном времени</p>
+            </div>
+
+            <div id="resultsGrid" class="results-grid"></div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmModal" class="confirm-modal" style="display: none;">
+            <div class="confirm-overlay"></div>
+            <div class="confirm-content">
+                <div class="confirm-icon">⚠️</div>
+                <h3 id="confirmTitle">Подтверждение действия</h3>
+                <p id="confirmMessage">Вы уверены?</p>
+                <div class="confirm-buttons">
+                    <button id="confirmCancel" class="btn btn-secondary">Отмена</button>
+                    <button id="confirmOk" class="btn btn-danger">Подтвердить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

@@ -11,7 +11,7 @@ export const firebaseConfig = {
 };
 
 // Admin password (измените на свой!)
-export const ADMIN_PASSWORD = "admin2025";
+export const ADMIN_PASSWORD = "9192931418";
 
 // Nominations and Candidates Configuration
 // Если есть image - используется картинка, если нет - emoji
@@ -20,65 +20,65 @@ export const nominations = [
         id: "zavoz-goda",
         title: "Завоз года",
         emoji: "🚗",
-        image: "zavoz.png" // Добавьте файл zavoz.png
+        image: "assets/nominations/zavoz.png"
     },
     {
         id: "alkash-goda",
         title: "Алкаш года",
         emoji: "🍺",
-        image: "alkash.png"
+        image: "assets/nominations/alkash.png"
     },
     {
         id: "korol-klassa",
         title: "Король класса",
         emoji: "👑",
-        image: "korol.png" // Добавьте файл korol.png
+        image: "assets/nominations/korol.png"
     },
     {
         id: "koroleva-klassa",
         title: "Королева класса",
         emoji: "👸",
-        image: "koroleva.png" // Добавьте файл koroleva.png
+        image: "assets/nominations/koroleva.png"
     },
     {
         id: "lubimets-uchiteley",
         title: "Любимец учителей",
         emoji: "📚",
-        image: "lubimets.png" // Добавьте файл lubimets.png
+        image: "assets/nominations/lubimets.png"
     },
     {
         id: "luchshiy-igrok-cr",
         title: "Лучший игрок Clash Royale",
         emoji: "🎮",
-        image: "clashroyale.png" // Добавьте файл clashroyale.png
+        image: "assets/nominations/clashroyale.png"
     },
     {
         id: "mister-ne-ya",
         title: "Мистер \"Да это не я!\"",
         emoji: "🙈",
-        image: "neya.png" // Добавьте файл neya.png
+        image: "assets/nominations/neya.png"
     },
     {
         id: "normis",
         title: "Нормис",
         emoji: "😎",
-        image: "normis.png" // Добавьте файл normis.png
+        image: "assets/nominations/normis.png"
     },
     {
         id: "missis-podruga",
         title: "Мисис лучшая подружка",
         emoji: "💕",
-        image: "podruga.png" // Добавьте файл podruga.png
+        image: "assets/nominations/podruga.png"
     }
 ];
 
 // Candidates list - ДОБАВЬТЕ СВОИХ КАНДИДАТОВ ЗДЕСЬ
 // Формат: { id: "уникальный-id", name: "Имя Фамилия", photo: "photo.jpg" } или { id: "...", name: "...", emoji: "🧑" }
 export const candidates = [
-    { id: "candidate1", name: "Ерёмич Иван", photo: "candidates/candidate1.png" },
-    { id: "candidate2", name: "Кандидат 2", photo: "candidates/candidate2.jpg" },
-    { id: "candidate3", name: "Кандидат 3", photo: "candidates/candidate3.jpg" },
-    { id: "candidate4", name: "Кандидат 4", photo: "candidates/candidate4.jpg" },
-    { id: "candidate5", name: "Кандидат 5", photo: "candidates/candidate5.jpg" },
+    { id: "candidate1", name: "Ерёмич Иван", photo: "assets/candidates/candidate1.png" },
+    { id: "candidate2", name: "Кандидат 2", photo: "assets/candidates/candidate2.jpg" },
+    { id: "candidate3", name: "Кандидат 3", photo: "assets/candidates/candidate3.jpg" },
+    { id: "candidate4", name: "Кандидат 4", photo: "assets/candidates/candidate4.jpg" },
+    { id: "candidate5", name: "Кандидат 5", photo: "assets/candidates/candidate5.jpg" },
     // Добавьте больше кандидатов по необходимости
 ];
