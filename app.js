@@ -127,9 +127,17 @@ function openNomination(nomination) {
     
     modalCandidates.innerHTML = '';
     
-    candidates.forEach(candidate => {
+    // Фильтруем кандидатов по полу
+    const allowedGender = nomination.allowedGender || 'any';
+    const filteredCandidates = candidates.filter(candidate => {
+        if (allowedGender === 'any') return true;
+        return candidate.gender === allowedGender;
+    });
+    
+    filteredCandidates.forEach(candidate => {
         const card = document.createElement('div');
         card.className = 'candidate-card';
+        card.setAttribute('data-candidate-id', candidate.id);
         
         if (selectedCandidate === candidate.id) {
             card.classList.add('selected');
@@ -165,8 +173,9 @@ function selectCandidate(candidateId) {
     
     // Update UI
     const cards = modalCandidates.querySelectorAll('.candidate-card');
-    cards.forEach((card, index) => {
-        if (candidates[index].id === candidateId) {
+    cards.forEach(card => {
+        const cardCandidateId = card.getAttribute('data-candidate-id');
+        if (cardCandidateId === candidateId) {
             card.classList.add('selected');
         } else {
             card.classList.remove('selected');
