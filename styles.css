@@ -387,16 +387,7 @@ body::before {
     height: 420px;
     object-fit: cover;
     object-position: center;
-    clip-path: polygon(
-        50% 0%,
-        100% 15%,
-        100% 70%,
-        80% 85%,
-        50% 100%,
-        20% 85%,
-        0% 70%,
-        0% 15%
-    );
+    border-radius: 15px;
     filter: 
         drop-shadow(0 0 30px rgba(255, 107, 53, 0.8))
         drop-shadow(0 0 60px rgba(255, 107, 53, 0.5));
@@ -825,6 +816,7 @@ body::before {
     .shield-voted-photo {
         width: 280px;
         height: 330px;
+        border-radius: 15px;
     }
 
     .shield-emoji {

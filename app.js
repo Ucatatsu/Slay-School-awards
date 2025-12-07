@@ -32,9 +32,7 @@ let votes = {};
 let currentNomination = null;
 let selectedCandidate = null;
 
-// Sound effect for nomination click
-const clickSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHAU2jdXvzn0vBSh+zPDajzsKElyx6OyrWBUIQ5zd8sFuJAUuhM/z24k2CBhku+zooVARC0yl4fG5ZRwFNo3V7859LwUofsz');
-clickSound.volume = 0.3;
+// Sound removed
 
 // Check if user already voted
 const hasVoted = localStorage.getItem('hasVoted');
@@ -118,14 +116,6 @@ function renderNominationsGrid() {
 
 // Open nomination for voting
 function openNomination(nomination) {
-    // Play click sound
-    try {
-        clickSound.currentTime = 0;
-        clickSound.play().catch(e => console.log('Sound play failed:', e));
-    } catch (e) {
-        console.log('Sound error:', e);
-    }
-    
     currentNomination = nomination;
     selectedCandidate = votes[nomination.id] || null;
     
