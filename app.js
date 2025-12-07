@@ -36,8 +36,9 @@ let selectedCandidate = null;
 
 // Check if user already voted
 const hasVoted = localStorage.getItem('hasVoted');
+votes = JSON.parse(localStorage.getItem('votes') || '{}');
+
 if (hasVoted) {
-    votes = JSON.parse(localStorage.getItem('votes') || '{}');
     showCompletion();
 } else {
     renderNominationsGrid();
@@ -334,7 +335,16 @@ modalSubmit.addEventListener('click', async () => {
 
 // Show completion screen
 function showCompletion() {
-    nominationsView.style.display = 'none';
+    // Показываем номинации с выбранными кандидатами
+    renderNominationsGrid();
+    
     votingModal.style.display = 'none';
     completionSection.style.display = 'block';
+    
+    // Отключаем возможность голосовать повторно
+    const shields = document.querySelectorAll('.nomination-shield');
+    shields.forEach(shield => {
+        shield.style.cursor = 'default';
+        shield.style.pointerEvents = 'none';
+    });
 }
