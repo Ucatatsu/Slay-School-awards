@@ -119,17 +119,31 @@ async function resetAllVotes() {
         resetVotesBtn.disabled = true;
         resetVotesBtn.textContent = '⏳ Удаление...';
         
-        // Delete all votes from Firebase
-        await remove(ref(database, 'votes'));
+        // Delete all votes and user votes from Firebase
+        await Promise.all([
+            remove(ref(database, 'votes')),
+            remove(ref(database, 'userVotes'))
+        ]);
         
         // Show success message
-        alert('✅ Все голоса успешно удалены!');
+        window.toast.success(
+            'Успешно удалено',
+            'Все голоса успешно удалены!'
+        );
         
         resetVotesBtn.disabled = false;
         resetVotesBtn.textContent = '🗑️ Сбросить все голоса';
     } catch (error) {
         console.error('Error resetting votes:', error);
-        alert('❌ Ошибка при удалении голосов: ' + error.message);
+        
+        const errorCode = error.code || error.name || 'UNKNOWN';
+        const errorMessage = error.message || 'Неизвестная ошибка';
+        
+        window.toast.error(
+            'Ошибка удаления',
+            'Не удалось удалить голоса',
+            `Код: ${errorCode} | ${errorMessage}`
+        );
         
         resetVotesBtn.disabled = false;
         resetVotesBtn.textContent = '🗑️ Сбросить все голоса';
@@ -150,16 +164,32 @@ function loadResults() {
     // Listen for real-time updates
     onValue(votesRef, (snapshot) => {
         const votesData = snapshot.val() || {};
+        console.log('Successfully loaded votes:', votesData);
         renderResults(votesData);
     }, (error) => {
         console.error('Error loading results:', error);
-        resultsGrid.innerHTML = '<div class="no-votes">Ошибка загрузки результатов</div>';
+        
+        // Формируем детальное сообщение об ошибке
+        const errorCode = error.code || 'UNKNOWN';
+        const errorMessage = error.message || 'Неизвестная ошибка';
+        
+        let displayMessage = 'Ошибка загрузки результатов';
+        
+        if (errorCode === 'PERMISSION_DENIED') {
+            displayMessage = '🔒 Ошибка доступа к базе данных<br><br>Необходимо настроить правила Firebase:<br>Realtime Database → Rules<br><br>Код ошибки: PERMISSION_DENIED';
+        } else {
+            displayMessage = `Ошибка загрузки результатов<br><br>Код: ${errorCode}<br>Детали: ${errorMessage}`;
+        }
+        
+        resultsGrid.innerHTML = `<div class="no-votes" style="color: #ff4444; white-space: pre-line;">${displayMessage}</div>`;
     });
 }
 
 // Render results
 function renderResults(votesData) {
     resultsGrid.innerHTML = '';
+    
+    console.log('Votes data from Firebase:', votesData); // Для отладки
     
     nominations.forEach(nomination => {
         const nominationVotes = votesData[nomination.id] || {};
@@ -171,7 +201,9 @@ function renderResults(votesData) {
         const sortedCandidates = Object.entries(nominationVotes)
             .map(([candidateId, count]) => {
                 const candidate = candidates.find(c => c.id === candidateId);
-                return { candidate, count };
+                // Убедимся, что count это число
+                const voteCount = typeof count === 'number' ? count : parseInt(count) || 0;
+                return { candidate, count: voteCount };
             })
             .filter(item => item.candidate)
             .sort((a, b) => b.count - a.count);
@@ -184,9 +216,12 @@ function renderResults(votesData) {
             candidatesHTML = '<div class="result-items-container">';
             sortedCandidates.forEach(({ candidate, count }) => {
                 const emoji = candidate.emoji || '👤';
+                const photoHTML = candidate.photo 
+                    ? `<img src="${candidate.photo}" alt="${candidate.name}" class="result-photo">`
+                    : emoji;
                 candidatesHTML += `
                     <div class="result-item">
-                        <span class="result-name">${emoji} ${candidate.name}</span>
+                        <span class="result-name">${photoHTML} ${candidate.name}</span>
                         <span class="result-votes">${count} ${getVotesWord(count)}</span>
                     </div>
                 `;
@@ -223,5 +258,6 @@ function getVotesWord(count) {
     
     return 'голосов';
 }
+
 
 

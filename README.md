@@ -85,48 +85,51 @@ git push -u origin main
 
 Сайт будет доступен: `https://username.github.io/repo/`
 
-## 📁 Структура файлов
+## 📁 Структура проекта
 
-### Обязательные файлы (для GitHub Pages):
+### Production файлы (на GitHub Pages):
 ```
 ├── index.html              # Главная страница голосования
+├── admin.html              # Админ-панель
 ├── app.js                  # Логика голосования
+├── admin.js                # Логика админ-панели
 ├── config.js               # Настройки (Firebase, кандидаты, номинации)
 ├── styles.css              # Основные стили
-├── image_scales.css        # Стили для изображений
-├── admin.html              # Админ-панель
-├── admin.js                # Логика админ-панели
 ├── admin-styles.css        # Стили админ-панели
+├── image_scales.css        # Стили для изображений
+├── toast.css               # Стили уведомлений
+├── toast.js                # Уведомления
 ├── .nojekyll               # Для GitHub Pages
-├── .github/workflows/      # GitHub Actions для деплоя
+├── .gitignore              # Игнорируемые файлы
+├── README.md               # Документация
+├── .github/workflows/      # GitHub Actions
 │   └── deploy.yml
-└── assets/                 # Все изображения
-    ├── logo.png            # Логотип
-    ├── SS.png              # Логотип для загрузки
-    ├── load.png            # Анимация загрузки
-    ├── bg.png              # Фон
-    ├── nominations/        # Изображения номинаций
-    │   ├── zavoz.png
-    │   ├── alkash.png
-    │   ├── korol.png
-    │   ├── koroleva.png
-    │   ├── lubimets.png
-    │   ├── clashroyale.png
-    │   ├── neya.png
-    │   ├── normis.png
-    │   └── podruga.png
-    └── candidates/         # Фотографии кандидатов
-        ├── candidate1.png
-        ├── candidate2.jpg
-        └── ...
+├── assets/                 # Изображения
+│   ├── logo.png, SS.png, load.png, bg.png
+│   ├── nominations/        # Изображения номинаций
+│   └── candidates/         # Фотографии кандидатов
+└── bot/                    # Telegram бот
+    ├── worker.js           # Production код бота
+    ├── wrangler.toml       # Конфигурация Cloudflare
+    ├── package.json
+    ├── deploy.bat          # Деплой бота
+    └── README.md
 ```
 
-### Файлы для разработки (не нужны на GitHub):
+### Development файлы (в папке `_dev/`, не на GitHub):
 ```
-├── server.py               # Локальный сервер
-├── analyze_*.py            # Скрипты анализа
+_dev/
+├── README.md               # Описание dev файлов
+├── deploy-site.bat         # Деплой сайта
+├── deploy-all.bat          # Деплой всего
+├── DEPLOY_GUIDE.md         # Инструкция по деплою
 ├── CHANGELOG.md            # История изменений
-└── DEPLOY.md               # Инструкция по деплою
+├── server.py               # Локальный сервер
+└── bot/                    # Dev файлы бота
+    ├── local-bot.js        # Локальный сервер бота
+    ├── test-bot.bat        # Запуск локального бота
+    ├── LOCAL_TESTING.md    # Инструкция по тестированию
+    └── SETUP_GUIDE.md      # Инструкция по настройке
 ```
 
 ## 🎯 Использование

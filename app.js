@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, get, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getDatabase, ref, set, get, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import { firebaseConfig, ADMIN_PASSWORD, nominations, candidates } from './config.js';
 
 // Initialize Firebase
@@ -32,6 +32,10 @@ let votes = {};
 let currentNomination = null;
 let selectedCandidate = null;
 
+// Sound effect for nomination click
+const clickSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGS57OihUBELTKXh8bllHAU2jdXvzn0vBSh+zPDajzsKElyx6OyrWBUIQ5zd8sFuJAUuhM/z24k2CBhku+zooVARC0yl4fG5ZRwFNo3V7859LwUofsz');
+clickSound.volume = 0.3;
+
 // Check if user already voted
 const hasVoted = localStorage.getItem('hasVoted');
 if (hasVoted) {
@@ -54,21 +58,48 @@ function renderNominationsGrid() {
         shield.className = 'nomination-shield';
         shield.setAttribute('data-nomination', nomination.id);
         
-        const shieldContent = nomination.image 
-            ? `<div class="shield-container">
-                   <img src="${nomination.image}" alt="${nomination.title}" class="shield-full-image">
-               </div>`
-            : `<div class="shield-container">
-                   <div class="shield-bg">
-                       <div class="shield-stars">
-                           <div class="shield-star"></div>
-                           <div class="shield-star"></div>
-                           <div class="shield-star"></div>
-                           <div class="shield-star"></div>
+        // Если проголосовали - показываем фото кандидата
+        let shieldContent;
+        if (hasVotedForThis) {
+            const votedCandidate = candidates.find(c => c.id === hasVotedForThis);
+            if (votedCandidate && votedCandidate.photo) {
+                shieldContent = `<div class="shield-container">
+                       <img src="${votedCandidate.photo}" alt="${votedCandidate.name}" class="shield-voted-photo">
+                   </div>`;
+            } else {
+                shieldContent = nomination.image 
+                    ? `<div class="shield-container">
+                           <img src="${nomination.image}" alt="${nomination.title}" class="shield-full-image">
+                       </div>`
+                    : `<div class="shield-container">
+                           <div class="shield-bg">
+                               <div class="shield-stars">
+                                   <div class="shield-star"></div>
+                                   <div class="shield-star"></div>
+                                   <div class="shield-star"></div>
+                                   <div class="shield-star"></div>
+                               </div>
+                           </div>
+                           <div class="shield-emoji">${nomination.emoji}</div>
+                       </div>`;
+            }
+        } else {
+            shieldContent = nomination.image 
+                ? `<div class="shield-container">
+                       <img src="${nomination.image}" alt="${nomination.title}" class="shield-full-image">
+                   </div>`
+                : `<div class="shield-container">
+                       <div class="shield-bg">
+                           <div class="shield-stars">
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                           </div>
                        </div>
-                   </div>
-                   <div class="shield-emoji">${nomination.emoji}</div>
-               </div>`;
+                       <div class="shield-emoji">${nomination.emoji}</div>
+                   </div>`;
+        }
         
         shield.innerHTML = `
             ${shieldContent}
@@ -87,6 +118,14 @@ function renderNominationsGrid() {
 
 // Open nomination for voting
 function openNomination(nomination) {
+    // Play click sound
+    try {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(e => console.log('Sound play failed:', e));
+    } catch (e) {
+        console.log('Sound error:', e);
+    }
+    
     currentNomination = nomination;
     selectedCandidate = votes[nomination.id] || null;
     
@@ -222,7 +261,10 @@ modalSubmit.addEventListener('click', async () => {
         if (userVoteSnapshot.exists()) {
             const existingVotes = userVoteSnapshot.val();
             if (existingVotes[currentNomination.id]) {
-                alert('⚠️ Вы уже голосовали в этой номинации!');
+                window.toast.warning(
+                    'Уже проголосовали',
+                    'Вы уже голосовали в этой номинации!'
+                );
                 modalSubmit.disabled = false;
                 modalSubmit.textContent = 'Подтвердить выбор';
                 return;
@@ -240,13 +282,24 @@ modalSubmit.addEventListener('click', async () => {
         // Save to Firebase (both vote count and user tracking) with timeout
         await Promise.race([
             Promise.all([
-                set(ref(database, `votes/${currentNomination.id}/${selectedCandidate}`), increment(1)),
+                // Increment vote count using transaction
+                runTransaction(ref(database, `votes/${currentNomination.id}/${selectedCandidate}`), (currentValue) => {
+                    return (currentValue || 0) + 1;
+                }),
+                // Save user vote tracking
                 set(ref(database, `userVotes/${userId}/${currentNomination.id}`), selectedCandidate)
             ]),
             new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('Timeout при сохранении')), 10000)
             )
         ]);
+        
+        // Show success notification
+        const candidateName = candidates.find(c => c.id === selectedCandidate)?.name || 'кандидат';
+        window.toast.success(
+            'Голос учтен!',
+            `Ваш голос за ${candidateName} сохранен`
+        );
         
         // Close modal
         closeModal();
@@ -264,6 +317,11 @@ modalSubmit.addEventListener('click', async () => {
         }
     } catch (error) {
         console.error('Error submitting vote:', error);
+        
+        // Формируем код ошибки для отладки
+        const errorCode = error.code || error.name || 'UNKNOWN';
+        const errorDetails = error.message || 'Неизвестная ошибка';
+        
         let errorMessage = 'Ошибка при сохранении голоса. Попробуйте еще раз.';
         
         if (error.message === 'Timeout' || error.message === 'Timeout при сохранении') {
@@ -272,7 +330,12 @@ modalSubmit.addEventListener('click', async () => {
             errorMessage = 'Ошибка доступа к базе данных. Обратитесь к администратору.';
         }
         
-        alert(errorMessage);
+        // Показываем toast с кодом ошибки
+        window.toast.error(
+            'Ошибка сохранения',
+            errorMessage,
+            `Код: ${errorCode} | ${errorDetails}`
+        );
     } finally {
         modalSubmit.disabled = false;
         modalSubmit.textContent = 'Подтвердить выбор';
