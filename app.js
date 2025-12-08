@@ -1,20 +1,42 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, get, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
+import { getDatabase, ref, set, get, runTransaction } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
 import { firebaseConfig, ADMIN_PASSWORD, nominations, candidates } from './config.js';
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// Initialize Firebase with error handling
+let app, database;
+try {
+    app = initializeApp(firebaseConfig);
+    database = getDatabase(app);
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.error('Firebase initialization error:', error);
+    // Продолжаем работу без Firebase (только локально)
+}
 
 // Loading Screen
 const loadingScreen = document.getElementById('loadingScreen');
 
-// Hide loading screen after initialization
-window.addEventListener('load', () => {
+// Hide loading screen after initialization (iOS-compatible)
+function hideLoadingScreen() {
     setTimeout(() => {
-        loadingScreen.classList.add('hidden');
-    }, 1500); // Показываем загрузку минимум 1.5 секунды
-});
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+        }
+    }, 1500);
+}
+
+// Используем несколько событий для надежности на iOS
+if (document.readyState === 'complete') {
+    hideLoadingScreen();
+} else {
+    window.addEventListener('load', hideLoadingScreen);
+    // Fallback для iOS
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(hideLoadingScreen, 100);
+    });
+    // Дополнительный fallback
+    setTimeout(hideLoadingScreen, 3000);
+}
 
 // Elements
 const nominationsView = document.getElementById('nominationsView');
@@ -34,23 +56,47 @@ let selectedCandidate = null;
 
 // Sound removed
 
-// Check if user already voted
-const hasVoted = localStorage.getItem('hasVoted');
-votes = JSON.parse(localStorage.getItem('votes') || '{}');
+// Check if user already voted (with error handling for iOS)
+let hasVoted = false;
+try {
+    hasVoted = localStorage.getItem('hasVoted');
+    votes = JSON.parse(localStorage.getItem('votes') || '{}');
+} catch (error) {
+    console.warn('LocalStorage access failed:', error);
+    votes = {};
+}
 
-if (hasVoted) {
-    showCompletion();
-} else {
-    renderNominationsGrid();
+// Инициализация UI
+try {
+    console.log('Starting UI initialization...', { hasVoted, votesCount: Object.keys(votes).length });
+    if (hasVoted) {
+        showCompletion();
+    } else {
+        renderNominationsGrid();
+    }
+    console.log('UI initialized successfully');
+} catch (error) {
+    console.error('UI initialization error:', error);
+    // Показываем номинации в любом случае
+    try {
+        nominationsView.style.display = 'block';
+        renderNominationsGrid();
+    } catch (fallbackError) {
+        console.error('Fallback rendering failed:', fallbackError);
+        // Последняя попытка - показать хоть что-то
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        document.body.innerHTML += '<div style="color: white; text-align: center; padding: 40px; font-size: 20px;">Ошибка загрузки. Пожалуйста, обновите страницу или попробуйте другой браузер.</div>';
+    }
 }
 
 // Render nominations grid
 function renderNominationsGrid() {
-    nominationsView.style.display = 'block';
-    
-    nominationsGrid.innerHTML = '';
-    
-    nominations.forEach(nomination => {
+    try {
+        nominationsView.style.display = 'block';
+        
+        nominationsGrid.innerHTML = '';
+        
+        nominations.forEach(nomination => {
         const hasVotedForThis = votes[nomination.id];
         
         const shield = document.createElement('div');
@@ -112,7 +158,12 @@ function renderNominationsGrid() {
         
         shield.addEventListener('click', () => openNomination(nomination));
         nominationsGrid.appendChild(shield);
-    });
+        });
+    } catch (error) {
+        console.error('Error rendering nominations:', error);
+        // Показываем сообщение об ошибке
+        nominationsGrid.innerHTML = '<div style="color: #ff6b35; text-align: center; padding: 40px;">Ошибка загрузки. Обновите страницу.</div>';
+    }
 }
 
 // Open nomination for voting
@@ -248,6 +299,10 @@ modalSubmit.addEventListener('click', async () => {
         const userId = getUserId();
         
         // Check if this user already voted (in Firebase) with timeout
+        if (!database) {
+            throw new Error('Database not initialized');
+        }
+        
         const userVoteRef = ref(database, `userVotes/${userId}`);
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Timeout')), 10000)
