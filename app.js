@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
 import { getDatabase, ref, set, get, runTransaction } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js';
-import { firebaseConfig, ADMIN_PASSWORD, nominations, candidates } from './config.js';
+import { firebaseConfig, ADMIN_PASSWORD, nominations, candidates, VOTING_END_DATE } from './config.js';
 
 // Initialize Firebase with error handling
 let app, database;
@@ -47,12 +47,12 @@ const modalClose = document.getElementById('modalClose');
 const modalTitle = document.getElementById('modalTitle');
 const modalCandidates = document.getElementById('modalCandidates');
 const modalSubmit = document.getElementById('modalSubmit');
-const completionSection = document.getElementById('completionSection');
 
 // State
 let votes = {};
 let currentNomination = null;
 let selectedCandidate = null;
+let countdownInterval = null;
 
 // Sound removed
 
@@ -69,11 +69,7 @@ try {
 // Инициализация UI
 try {
     console.log('Starting UI initialization...', { hasVoted, votesCount: Object.keys(votes).length });
-    if (hasVoted) {
-        showCompletion();
-    } else {
-        renderNominationsGrid();
-    }
+    renderNominationsGrid();
     console.log('UI initialized successfully');
 } catch (error) {
     console.error('UI initialization error:', error);
@@ -93,6 +89,12 @@ try {
 function renderNominationsGrid() {
     try {
         nominationsView.style.display = 'block';
+        
+        // Запускаем таймер обратного отсчета (только один раз)
+        if (!countdownInterval) {
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
         
         nominationsGrid.innerHTML = '';
         
@@ -168,6 +170,15 @@ function renderNominationsGrid() {
 
 // Open nomination for voting
 function openNomination(nomination) {
+    // Проверяем, не завершилось ли голосование
+    if (isVotingEnded()) {
+        window.toast.warning(
+            'Голосование завершено',
+            'К сожалению, время голосования истекло'
+        );
+        return;
+    }
+    
     currentNomination = nomination;
     selectedCandidate = votes[nomination.id] || null;
     
@@ -366,10 +377,15 @@ modalSubmit.addEventListener('click', async () => {
             } catch (storageError) {
                 console.warn('LocalStorage save failed:', storageError);
             }
-            showCompletion();
-        } else {
-            renderNominationsGrid();
+            // Показываем уведомление о завершении
+            window.toast.success(
+                'Голосование завершено!',
+                'Спасибо за участие! Все ваши голоса учтены.'
+            );
         }
+        
+        // Обновляем отображение номинаций
+        renderNominationsGrid();
     } catch (error) {
         console.error('Error submitting vote:', error);
         
@@ -397,18 +413,201 @@ modalSubmit.addEventListener('click', async () => {
     }
 });
 
-// Show completion screen
-function showCompletion() {
-    // Показываем номинации с выбранными кандидатами
-    renderNominationsGrid();
+// Check if voting has ended
+function isVotingEnded() {
+    return new Date().getTime() > VOTING_END_DATE.getTime();
+}
+
+// Countdown Timer
+function updateCountdown() {
+    const now = new Date().getTime();
+    const endTime = VOTING_END_DATE.getTime();
+    const distance = endTime - now;
     
-    votingModal.style.display = 'none';
-    completionSection.style.display = 'block';
+    console.log('Countdown:', { now: new Date(now), endTime: new Date(endTime), distance });
     
-    // Отключаем возможность голосовать повторно
-    const shields = document.querySelectorAll('.nomination-shield');
-    shields.forEach(shield => {
-        shield.style.cursor = 'default';
-        shield.style.pointerEvents = 'none';
+    if (distance < 0) {
+        // Голосование завершено - показываем сообщение и победителей
+        const timerEl = document.getElementById('countdownTimer');
+        if (timerEl) {
+            timerEl.innerHTML = `
+                <div class="voting-ended">
+                    <div class="ended-title">ГОЛОСОВАНИЕ</div>
+                    <div class="ended-title">ЗАВЕРШЕНО</div>
+                </div>
+            `;
+        }
+        
+        // Меняем замок на закрытый (на весь экран)
+        const decorativeElements = document.querySelector('.decorative-elements');
+        if (decorativeElements) {
+            decorativeElements.classList.add('voting-ended-state');
+            decorativeElements.innerHTML = `
+                <img src="assets/locked_locker.png" alt="Locked" class="locked-fullscreen">
+            `;
+        }
+        
+        // Показываем победителей
+        showWinners();
+        
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        return;
+    }
+    
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    
+    console.log('Time values:', { days, hours, minutes });
+    
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    
+    if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+}
+
+// Show winners after voting ends
+async function showWinners() {
+    try {
+        if (!database) {
+            console.error('Database not initialized');
+            return;
+        }
+        
+        // Получаем все голоса из Firebase
+        const votesRef = ref(database, 'votes');
+        const votesSnapshot = await get(votesRef);
+        
+        if (!votesSnapshot.exists()) {
+            console.log('No votes found');
+            return;
+        }
+        
+        const allVotes = votesSnapshot.val();
+        const winners = {};
+        
+        // Находим победителя для каждой номинации
+        nominations.forEach(nomination => {
+            const nominationVotes = allVotes[nomination.id] || {};
+            let maxVotes = 0;
+            let winnerId = null;
+            
+            Object.entries(nominationVotes).forEach(([candidateId, voteCount]) => {
+                if (voteCount > maxVotes) {
+                    maxVotes = voteCount;
+                    winnerId = candidateId;
+                }
+            });
+            
+            if (winnerId) {
+                winners[nomination.id] = {
+                    candidateId: winnerId,
+                    votes: maxVotes
+                };
+            }
+        });
+        
+        // Отображаем победителей
+        renderWinners(winners);
+    } catch (error) {
+        console.error('Error loading winners:', error);
+    }
+}
+
+// Render winners grid
+function renderWinners(winners) {
+    nominationsGrid.innerHTML = '';
+    
+    nominations.forEach(nomination => {
+        const winner = winners[nomination.id];
+        const shield = document.createElement('div');
+        shield.className = 'nomination-shield winner-shield';
+        
+        let shieldContent;
+        if (winner) {
+            const winnerCandidate = candidates.find(c => c.id === winner.candidateId);
+            if (winnerCandidate && winnerCandidate.photo) {
+                shieldContent = `
+                    <div class="shield-container">
+                        <img src="${winnerCandidate.photo}" alt="${winnerCandidate.name}" class="shield-voted-photo">
+                        <div class="winner-badge">🏆</div>
+                    </div>
+                `;
+            } else {
+                shieldContent = `
+                    <div class="shield-container">
+                        <div class="shield-bg">
+                            <div class="shield-stars">
+                                <div class="shield-star"></div>
+                                <div class="shield-star"></div>
+                                <div class="shield-star"></div>
+                                <div class="shield-star"></div>
+                            </div>
+                        </div>
+                        <div class="shield-emoji">${nomination.emoji}</div>
+                    </div>
+                `;
+            }
+            
+            shield.innerHTML = `
+                ${shieldContent}
+                <div class="nomination-info">
+                    <div class="nomination-name">${nomination.title}</div>
+                    <div class="winner-name">${winnerCandidate ? winnerCandidate.name : 'Нет данных'}</div>
+                    <div class="winner-votes">${winner.votes} ${getVotesWord(winner.votes)}</div>
+                </div>
+            `;
+        } else {
+            shieldContent = nomination.image 
+                ? `<div class="shield-container">
+                       <img src="${nomination.image}" alt="${nomination.title}" class="shield-full-image">
+                   </div>`
+                : `<div class="shield-container">
+                       <div class="shield-bg">
+                           <div class="shield-stars">
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                               <div class="shield-star"></div>
+                           </div>
+                       </div>
+                       <div class="shield-emoji">${nomination.emoji}</div>
+                   </div>`;
+            
+            shield.innerHTML = `
+                ${shieldContent}
+                <div class="nomination-info">
+                    <div class="nomination-name">${nomination.title}</div>
+                    <div class="winner-name">Нет голосов</div>
+                </div>
+            `;
+        }
+        
+        nominationsGrid.appendChild(shield);
     });
 }
+
+// Helper function for correct word form
+function getVotesWord(count) {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+    
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+        return 'голосов';
+    }
+    if (lastDigit === 1) {
+        return 'голос';
+    }
+    if (lastDigit >= 2 && lastDigit <= 4) {
+        return 'голоса';
+    }
+    return 'голосов';
+}
+
+

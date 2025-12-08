@@ -57,6 +57,32 @@
                 <img src="assets/zamok.png" alt="" class="decoration-zamok">
                 <img src="assets/cep.png" alt="" class="decoration-cep">
             </div>
+
+            <!-- Countdown Timer -->
+            <div class="countdown-timer" id="countdownTimer" style="display: block;">
+                <div class="countdown-title-top">ДО ОКОНЧАНИЯ</div>
+                <div class="countdown-title-main">ГОЛОСОВАНИЯ</div>
+                <div class="countdown-display">
+                    <div class="countdown-block">
+                        <div class="countdown-value" id="days">00</div>
+                        <div class="countdown-label">дней</div>
+                    </div>
+                    <div class="countdown-separator">
+                        <img src="assets/separator.png" alt="✦" class="separator-icon">
+                    </div>
+                    <div class="countdown-block">
+                        <div class="countdown-value" id="hours">00</div>
+                        <div class="countdown-label">час</div>
+                    </div>
+                    <div class="countdown-separator">
+                        <img src="assets/separator.png" alt="✦" class="separator-icon">
+                    </div>
+                    <div class="countdown-block">
+                        <div class="countdown-value" id="minutes">00</div>
+                        <div class="countdown-label">минут</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal for Voting -->
@@ -70,14 +96,7 @@
             </div>
         </div>
 
-        <div id="completionSection" class="completion-section" style="display: none;">
-            <div class="completion-card">
-                <div class="success-icon">✨</div>
-                <h2>Спасибо за участие!</h2>
-                <p>Ваши голоса учтены</p>
-                <p class="completion-note">Результаты будут объявлены позже</p>
-            </div>
-        </div>
+
     </div>
 
     <script type="module" src="toast.js"></script>

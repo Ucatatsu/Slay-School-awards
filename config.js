@@ -13,6 +13,11 @@ export const firebaseConfig = {
 // Admin password (измените на свой!)
 export const ADMIN_PASSWORD = "9192931418";
 
+// Voting end date (измените на нужную дату окончания голосования)
+// Формат: год, месяц (0-11), день, час, минута
+// ВНИМАНИЕ: месяцы начинаются с 0! (0=январь, 1=февраль, ..., 11=декабрь)
+export const VOTING_END_DATE = new Date(2026, 5, 24, 23, 59, 59); // 19 июня 2026, 23:59:59(2026, 6, 19, 23, 59, 59)
+
 // Nominations and Candidates Configuration
 // Если есть image - используется картинка, если нет - emoji
 // allowedGender: "male" (только парни), "female" (только девушки), "any" (все)
